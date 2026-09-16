@@ -1,6 +1,6 @@
 export type Point = { x: number; y: number };
 export type Direction = 'up' | 'down' | 'left' | 'right';
-export type Phase = 'menu' | 'playing' | 'room-complete' | 'reveal' | 'proposal' | 'success';
+export type Phase = 'menu' | 'playing' | 'room-complete' | 'reveal' | 'proposal' | 'success' | 'photos';
 export type RoomTrace = { main: Point[][]; detours: Point[][] };
 
 export const WORLD = { width: 480, height: 256 };
@@ -8,6 +8,7 @@ export const VIEW = { zoom: 1.6, radius: 50 };
 export const ROAD_WIDTH = 20;
 export const FOOT_RADIUS = 3;
 export const WALK_RADIUS = ROAD_WIDTH / 2 - FOOT_RADIUS;
+const ROUTE_COVERAGE_RADIUS = WALK_RADIUS * 2;
 export const WALK_SPEED = 62;
 
 export const ROOMS = [
@@ -295,7 +296,7 @@ export function advanceJourney(roomIndex: number, journey: Journey, directions: 
     journey.route = hit.route;
     if (hit.route === 0) {
       for (const [index, sample] of samples.entries()) {
-        if (!journey.visited.has(index) && Math.hypot(position.x - sample.x, position.y - sample.y) <= WALK_RADIUS + 1) {
+        if (!journey.visited.has(index) && Math.hypot(position.x - sample.x, position.y - sample.y) <= ROUTE_COVERAGE_RADIUS) {
           journey.visited.add(index);
         }
       }

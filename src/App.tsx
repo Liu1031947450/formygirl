@@ -4,6 +4,7 @@ import type { IconName } from 'animal-island-ui';
 import { setSound } from './audio';
 import GameBoard from './GameBoard';
 import Ending from './Ending';
+import PhotoWall from './PhotoWall';
 import { ROOMS } from './game';
 import type { Phase, RoomTrace } from './game';
 
@@ -109,6 +110,8 @@ export default function App() {
             <p className="start-instructions">WASD / 方向键移动 · 手机按住方向按钮</p>
             <p className="start-music-note"><Icon name="Music" size={14} />开始后有音乐陪伴，可在右上角随时关闭</p>
           </Card>
+        ) : phase === 'photos' ? (
+          <PhotoWall onBack={() => setPhase('success')} />
         ) : isEnding ? (
           <Ending phase={phase} reducedMotion={reducedMotion} traces={traces} onPhase={setPhase} onRestart={() => setRestartOpen(true)} />
         ) : (

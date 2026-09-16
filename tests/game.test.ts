@@ -28,7 +28,7 @@ function walkPath(roomIndex: number, journey: Journey, points: readonly Point[],
   for (let index = 1; index < points.length; index += 1) {
     const start = points[index - 1];
     const end = points[index];
-    const steps = Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / 4);
+    const steps = Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / 2);
     for (let step = 1; step <= steps; step += 1) {
       walkTo(roomIndex, journey, { x: start.x + (end.x - start.x) * step / steps, y: start.y + (end.y - start.y) * step / steps }, recorded);
     }
@@ -104,6 +104,64 @@ test('all four rooms and all twenty dead ends work with directional input and re
       }
     }
     assert.ok(VIEW.radius * 2 < pathLength(room.points) / 2);
+  }
+});
+
+test('walking past a fork along the main-road edge reaches full coverage without skipping the door', () => {
+  const journey = createJourney(0);
+  walkPath(0, journey, [
+    { x: 153, y: 66 }, { x: 146.5, y: 66 }, { x: 146.5, y: 110 },
+    { x: 153, y: 110 }, { x: 153, y: 188 }, { x: 280, y: 188 },
+  ]);
+  assert.equal(journey.percent, 100);
+  assert.equal(journey.visited.size, ROUTE_SAMPLES[0].length);
+  assert.equal(journey.hasKey, true);
+  assert.equal(journey.completed, false, 'full coverage must not bypass the door distance');
+  walkTo(0, journey, ROOMS[0].points.at(-1)!);
+  assert.equal(journey.completed, true);
+});
+
+test('all four rooms can be completed once along either road edge', () => {
+  for (const [roomIndex, room] of ROOMS.entries()) {
+    for (const offset of [-6.9, -6.5, 6.5, 6.9]) {
+      const points: Point[] = [{ ...room.points[0] }];
+      for (let index = 1; index < room.points.length; index += 1) {
+        const start = room.points[index - 1];
+        const end = room.points[index];
+        const length = Math.hypot(end.x - start.x, end.y - start.y);
+        const shift = { x: -(end.y - start.y) / length * offset, y: (end.x - start.x) / length * offset };
+        points.push({ x: start.x + shift.x, y: start.y + shift.y }, { x: end.x + shift.x, y: end.y + shift.y });
+      }
+      points.push({ ...room.points.at(-1)! });
+      const journey = createJourney(roomIndex);
+      walkPath(roomIndex, journey, points);
+      const scenario = `${room.id}, offset ${offset}`;
+      assert.equal(journey.percent, 100, scenario);
+      assert.equal(journey.visited.size, ROUTE_SAMPLES[roomIndex].length, scenario);
+      assert.equal(journey.hasKey, true, scenario);
+      assert.equal(journey.completed, true, scenario);
+    }
+  }
+});
+
+test('inside turns cover L and V corners without widening key pickup', () => {
+  const scenarios = [
+    { roomIndex: 0, points: [
+      { x: 153, y: 66 }, { x: 153, y: 170 }, { x: 159.9, y: 170 },
+      { x: 159.9, y: 181.1 }, { x: 177, y: 181.1 }, { x: 177, y: 188 }, { x: 287, y: 188 },
+    ] },
+    { roomIndex: 2, points: [
+      { x: 122, y: 68 }, { x: 185, y: 170.48 }, { x: 197, y: 177 },
+      { x: 209, y: 170.48 }, { x: 272, y: 68 },
+    ] },
+  ];
+  for (const { roomIndex, points } of scenarios) {
+    const journey = createJourney(roomIndex);
+    walkPath(roomIndex, journey, points);
+    assert.equal(journey.percent, 100, ROOMS[roomIndex].name);
+    assert.equal(journey.visited.size, ROUTE_SAMPLES[roomIndex].length);
+    assert.equal(journey.hasKey, false, 'exploration tolerance must not pick up an out-of-reach key');
+    assert.equal(journey.completed, false, 'reaching the door without a key must not complete the room');
   }
 });
 

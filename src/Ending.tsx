@@ -144,7 +144,10 @@ export default function Ending({ phase, reducedMotion, traces, onPhase, onRestar
             <div className="success-content">
               <p>你说“愿意”的这一刻，是我最喜欢的风景。</p>
               <div className="promise-date">{new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())} · 我们的幸福起点</div>
-              <Button type="primary" icon={<Icon name="Refresh" size={17} />} onClick={onRestart}>再一起走一遍</Button>
+              <div className="success-actions">
+                <Button type="primary" icon={<Icon name="Camera" size={17} />} onClick={() => onPhase('photos')}>看看我们的照片墙</Button>
+                <Button type="text" icon={<Icon name="Refresh" size={17} />} onClick={onRestart}>再一起走一遍</Button>
+              </div>
               <div className="confetti" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <i key={index} style={{ '--index': index, '--x': `${(index * 43) % 100}%`, '--time': `${(index % 7) * 0.25}s` } as CSSProperties} />)}</div>
             </div>
           ) : (
