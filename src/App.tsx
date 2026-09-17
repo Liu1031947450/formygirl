@@ -4,7 +4,7 @@ import type { IconName } from 'animal-island-ui';
 import { setSound } from './audio';
 import GameBoard from './GameBoard';
 import Ending from './Ending';
-import PhotoWall from './PhotoWall';
+import PhotoWall, { preloadPhotos } from './PhotoWall';
 import { ROOMS } from './game';
 import type { Phase, RoomTrace } from './game';
 
@@ -80,6 +80,7 @@ export default function App() {
   function startGame() {
     if (!soundHandled.current) void changeSound(true);
     setPhase('playing');
+    preloadPhotos();
   }
 
   return (

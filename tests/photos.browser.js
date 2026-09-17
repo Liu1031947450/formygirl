@@ -1,12 +1,34 @@
 export async function verifyPhotoWall(page, baseUrl = 'http://localhost:5173/') {
   const assert = (await import('node:assert/strict')).default;
   const { readdir } = await import('node:fs/promises');
+  const files = (await readdir(new URL('../public/img/', import.meta.url))).filter((file) => file.endsWith('.jpg')).sort();
   await page.cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await page.goto(baseUrl);
   await page.waitForSelector('.start-button');
+  assert.equal(await page.evaluate(() => performance.getEntriesByType('resource').filter((entry) => new URL(entry.name).pathname.includes('/img/')).length), 0, 'photos are not requested from the start menu');
   await page.click('.start-button');
+  await page.waitForSelector('.game-canvas');
   await page.waitForFunction(() => !document.querySelector('.music-toggle').disabled);
   if (await page.evaluate(() => document.querySelector('.music-toggle').getAttribute('aria-pressed') === 'true')) await page.click('.music-toggle');
+
+  await page.waitForFunction((count) => performance.getEntriesByType('resource').filter((entry) => new URL(entry.name).pathname.includes('/img/')).length === count, files.length, { timeout: 60000 });
+  const photoUrls = await page.evaluate(() => performance.getEntriesByType('resource').filter((entry) => new URL(entry.name).pathname.includes('/img/')).map((entry) => entry.name));
+  assert.deepEqual(photoUrls.map((url) => new URL(url).pathname.split('/').at(-1)).sort(), files);
+  assert.equal(await page.evaluate(() => document.querySelector('.photo-wall')), null, 'preloading does not reveal the photo wall');
+  await page.cdp('Network.enable');
+  await page.cdp('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  try {
+    const cached = await page.evaluate((urls) => Promise.all(urls.map((src) => new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve(image.naturalWidth > 0);
+      image.onerror = () => resolve(false);
+      image.src = src;
+    }))), photoUrls);
+    assert.ok(cached.every(Boolean), 'all photos can be loaded from cache before reaching the ending, even offline');
+  } finally {
+    await page.cdp('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await page.cdp('Network.disable');
+  }
 
   for (let roomIndex = 0; roomIndex < 4; roomIndex += 1) {
     const completed = await page.evaluate(async (index) => {
@@ -88,7 +110,6 @@ export async function verifyPhotoWall(page, baseUrl = 'http://localhost:5173/') 
   }
 
   await page.click('text="看看我们的照片墙"');
-  const files = (await readdir(new URL('../public/img/', import.meta.url))).filter((file) => file.endsWith('.jpg')).sort();
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('.photo-open img')].map((image) => new URL(image.src).pathname.split('/').at(-1)).sort()), files);
   for (let index = 0; index < files.length; index += 1) {
     await page.evaluate((photoIndex) => document.querySelectorAll('.photo-open')[photoIndex].scrollIntoView({ block: 'center' }), index);
@@ -108,5 +129,5 @@ export async function verifyPhotoWall(page, baseUrl = 'http://localhost:5173/') 
   assert.equal(await page.evaluate(() => document.querySelector('.scene-coordinates').textContent), '01 / 04');
   await page.cdp('Emulation.clearDeviceMetricsOverride');
   await page.cdp('Emulation.setEmulatedMedia', { features: [] });
-  console.log('PASS: four rooms → yes → existing ending → photo wall → preview/back/restart, 7 images, keyboard, reduced motion, 9 viewports');
+  console.log('PASS: start-triggered preload, offline photo cache, four rooms → yes → existing ending → photo wall → preview/back/restart, 7 images, keyboard, reduced motion, 9 viewports');
 }

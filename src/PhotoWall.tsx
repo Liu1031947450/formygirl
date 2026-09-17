@@ -11,6 +11,15 @@ const photos = [
   { file: 'e0d982848ae9ac85d03c1bcc4c353083.jpg', caption: '往后的四季，也要一起拍照', alt: '两人和猫咪一起在烛光前做出俏皮表情', width: 1080, height: 1440 },
 ];
 
+export function preloadPhotos() {
+  for (const photo of photos) {
+    const image = new Image();
+    image.fetchPriority = 'low';
+    image.decoding = 'async';
+    image.src = `./img/${photo.file}`;
+  }
+}
+
 export default function PhotoWall({ onBack }: { onBack: () => void }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<(typeof photos)[number] | null>(null);
