@@ -11,9 +11,9 @@ import type { Phase, RoomTrace } from './game';
 const seasonIcons: IconName[] = ['Flower', 'Sun', 'Apple', 'Snowflake'];
 const chapterNames = ['第一章', '第二章', '第三章', '第四章'];
 const helpSteps = [
-  { icon: 'Compass', title: '想往哪走，就按哪个方向', text: 'WASD 或方向键控制上下左右，组合按键可以斜走。小路里随时能转向、后退；手机按住方向按钮，松手就停。' },
+  { icon: 'Compass', title: '想往哪走，就朝哪个方向', text: '电脑用 WASD 或方向键，组合按键可以斜走。手机拖动摇杆自由转向，轻推慢走、推满快走，松手就停；小路里随时能回头。' },
   { icon: 'Key', title: '带上钥匙，收藏沿途风景', text: '靠近金色钥匙会自动拾取。把小院里的主路探索完整，再走进花门。回头不会丢钥匙，也不会减少进度。' },
-  { icon: 'Map', title: '岔路也值得去看看', text: '朝岔路的方向直接走进去，不需要点击选路。遇到倒木、石堆、栅栏或断桥，按方向键原路回来就好。没有失败惩罚。' },
+  { icon: 'Map', title: '岔路也值得去看看', text: '朝岔路的方向直接走进去，不需要点击选路。遇到倒木、石堆、栅栏或断桥，沿原路回来就好。没有失败惩罚。' },
 ] as const;
 
 export default function App() {
@@ -107,7 +107,7 @@ export default function App() {
             <h2 id="start-title">沿着小径，去看看四季</h2>
             <p className="start-description">穿过晨雾，捡起钥匙。<br />下一扇门后，会是什么风景呢？</p>
             <Button className="start-button" type="primary" size="large" icon={<Icon name="Play" size={18} />} onClick={startGame} autoFocus>开始游戏</Button>
-            <p className="start-instructions">WASD / 方向键移动 · 手机按住方向按钮</p>
+            <p className="start-instructions">WASD / 方向键移动 · 手机拖动摇杆</p>
             <p className="start-music-note"><Icon name="Music" size={14} />开始后有音乐陪伴，可在右上角随时关闭</p>
           </Card>
         ) : phase === 'photos' ? (

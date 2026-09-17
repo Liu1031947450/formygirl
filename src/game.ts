@@ -233,17 +233,32 @@ export function roadAt(roomIndex: number, position: Point) {
   return nearest;
 }
 
-export function movementVector(directions: Iterable<Direction>): Point {
-  const pressed = new Set(directions);
+export function movementVector(input: Iterable<Direction> | Point): Point {
+  if ('x' in input) {
+    const length = Math.hypot(input.x, input.y);
+    if (!Number.isFinite(length)) return { x: 0, y: 0 };
+    const scale = Math.max(1, length);
+    return { x: input.x / scale, y: input.y / scale };
+  }
+  const pressed = new Set(input);
   const horizontal = Number(pressed.has('right')) - Number(pressed.has('left'));
   const vertical = Number(pressed.has('down')) - Number(pressed.has('up'));
   const length = Math.hypot(horizontal, vertical) || 1;
   return { x: horizontal / length, y: vertical / length };
 }
 
-export function movePlayer(roomIndex: number, start: Point, directions: Iterable<Direction>, elapsed: number): Point[] {
+export function joystickVector(offset: Point): Point {
+  const vector = movementVector(offset);
+  const length = Math.hypot(vector.x, vector.y);
+  const deadZone = 0.15;
+  if (length <= deadZone) return { x: 0, y: 0 };
+  const scale = (length - deadZone) / (1 - deadZone) / length;
+  return { x: vector.x * scale, y: vector.y * scale };
+}
+
+export function movePlayer(roomIndex: number, start: Point, input: Iterable<Direction> | Point, elapsed: number): Point[] {
   if (!Number.isFinite(elapsed) || elapsed <= 0) return [];
-  const vector = movementVector(directions);
+  const vector = movementVector(input);
   if (!vector.x && !vector.y) return [];
   const distance = Math.min(elapsed, 0.05) * WALK_SPEED;
   const steps = Math.ceil(distance);
@@ -280,9 +295,9 @@ function appendPoint(points: Point[], position: Point) {
   points.push(position);
 }
 
-export function advanceJourney(roomIndex: number, journey: Journey, directions: Iterable<Direction>, elapsed: number) {
+export function advanceJourney(roomIndex: number, journey: Journey, input: Iterable<Direction> | Point, elapsed: number) {
   if (journey.completed) return false;
-  const positions = movePlayer(roomIndex, journey.position, directions, elapsed);
+  const positions = movePlayer(roomIndex, journey.position, input, elapsed);
   const room = ROOMS[roomIndex];
   const key = pathPosition(room.points, pathLength(room.points) * room.keyAt);
   const samples = ROUTE_SAMPLES[roomIndex];
