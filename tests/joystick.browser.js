@@ -235,7 +235,7 @@ export async function verifyJoystick(page, baseUrl = 'http://localhost:5173/') {
 
     await restart();
     await touch('touchStart', [point(0, 1)]);
-    await page.waitForFunction(() => window.joystickProbe.position.y >= 187.5);
+    await page.waitForFunction(() => window.joystickProbe.position.y >= 187.5, undefined, { polling: 16 });
     await touch('touchMove', [point(1, 0)]);
     await page.waitForSelector('.room-complete-message');
     await expectStopped('completing a room clears the held joystick');
